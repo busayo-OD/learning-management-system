@@ -1,0 +1,33 @@
+version: '3.8'
+services:
+  dev-db:
+    image: mysql:latest
+    environment:
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    env_file:
+      - .env
+    volumes:
+      - mysql-data:/var/lib/mysql
+    ports:
+      - '3306:3306'
+
+  test-db:
+    image: mysql:latest
+    environment:
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    env_file:
+      - .env.test
+    volumes:
+      - mysql-test-data:/var/lib/mysql
+    ports:
+      - '3307:3306'
+
+volumes:
+  mysql-data:
+  mysql-test-data:
