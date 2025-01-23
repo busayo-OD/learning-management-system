@@ -24,6 +24,7 @@
     "migration:revert": "npm run build && npm run typeorm -- migration:revert -d src/config/typeorm.ts"
   },
   "dependencies": {
+    "@nestjs/cli": "^10.0.0",
     "@nestjs/cache-manager": "^2.3.0",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.3.0",
@@ -49,7 +50,6 @@
     "uuid": "^11.0.5"
   },
   "devDependencies": {
-    "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",
     "@types/bcrypt": "^5.0.2",
