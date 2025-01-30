@@ -11,6 +11,8 @@ import { JwtStrategy } from './strategy/jwt.strategy';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './guards/roles.guard';
 import { LevelModule } from 'src/level/level.module';
+import { TeacherModule } from 'src/teacher/teacher.module';
+import { ParentModule } from 'src/parent/parent.module';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { LevelModule } from 'src/level/level.module';
     RoleModule,
     StudentModule,
     LevelModule,
+    TeacherModule,
+    ParentModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({

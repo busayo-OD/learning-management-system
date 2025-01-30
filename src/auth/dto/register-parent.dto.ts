@@ -1,49 +1,46 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsEmail, IsNotEmpty, IsNumber, IsString } from "class-validator";
+import { IsEmail, IsNotEmpty, IsString, MinLength } from "class-validator";
 
-export class RegisterStudentDto {
+export class RegisterParentDto {
+    @ApiProperty()
+    @IsNotEmpty()
+    @IsString()
+    firstname: string;
   
     @ApiProperty()
-    @IsString()
     @IsNotEmpty()
-    firstname: string;
-
-    @ApiProperty()
     @IsString()
-    @IsNotEmpty()
     lastname: string;
-
+  
     @ApiProperty()
     @IsNotEmpty()
     @IsEmail()
     email: string;
-
+  
     @ApiProperty()
     @IsNotEmpty()
+    @MinLength(6)
     password: string;
-
+  
     @ApiProperty()
-    @IsString()
     @IsNotEmpty()
+    @IsString()
     phoneNumber: string;
-
+  
     @ApiProperty()
     @IsString()
     avatar?: string;
-
+  
     @ApiProperty()
     @IsString()
     address?: string;
-
+  
     @ApiProperty()
     @IsString()
     state?: string;
-
+  
     @ApiProperty()
     @IsString()
     country?: string;
-
-    @ApiProperty()
-    @IsNumber()
-    levelId: number;
-}
+  }
+  

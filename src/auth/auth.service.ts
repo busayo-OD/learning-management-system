@@ -12,6 +12,12 @@ import { RegisterStudentDto } from './dto/register-student.dto';
 import { StudentService } from 'src/student/student.service';
 import { LevelService } from 'src/level/level.service';
 import { RegisterAdminDto } from './dto/register-admin.dto';
+import { RegisterTeacherDto } from './dto/register-teacher.dto';
+import { TeacherService } from 'src/teacher/teacher.service';
+import { Teacher } from 'src/teacher/entities/teacher.entity';
+import { RegisterParentDto } from './dto/register-parent.dto';
+import { Parent } from 'src/parent/entities/parent.entity';
+import { ParentService } from 'src/parent/parent.service';
 
 @Injectable()
 export class AuthService {
@@ -21,6 +27,8 @@ export class AuthService {
     private readonly studentService: StudentService,
     private readonly jwtService: JwtService,
     private readonly levelService: LevelService,
+    private readonly teacherService: TeacherService,
+    private readonly parentService: ParentService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<User | null> {
@@ -44,7 +52,7 @@ export class AuthService {
       lastname: user.lastname,
       email: user.email,
       password: hashedPassword,
-      username: (user.firstname + user.lastname).toLowerCase(), // Auto-generated username
+      username: (user.firstname + user.lastname).toLowerCase(),
       phoneNumber: user.phoneNumber,
       avatar: user.avatar,
       address: user.address,
@@ -123,4 +131,82 @@ export class AuthService {
     const token = this.jwtService.sign(payload);
     return { access_token: token };
   }
+
+  async registerTeacher(user: RegisterTeacherDto): Promise<AccessToken> {
+    const existingUser = await this.userService.findOneByEmail(user.email);
+    if (existingUser) {
+      throw new BadRequestException('Email already exists');
+    }
+  
+    const hashedPassword = await bcrypt.hash(user.password, 10);
+  
+    const newUser = await this.userService.createUser({
+      firstname: user.firstname,
+      lastname: user.lastname,
+      email: user.email,
+      password: hashedPassword,
+      username: (user.firstname + user.lastname).toLowerCase(),
+      phoneNumber: user.phoneNumber,
+      avatar: user.avatar,
+      address: user.address,
+      state: user.state,
+      country: user.country,
+    });
+  
+    const teacherRole: Role = await this.roleService.findByTitle('teacher');
+    if (!teacherRole) {
+      throw new BadRequestException('Teacher role not found');
+    }
+    newUser.roles = [teacherRole];
+    await this.userService.saveUser(newUser);
+  
+    const newTeacher = new Teacher();
+    newTeacher.user = newUser;
+    newTeacher.teacherId = `TEA-${newUser.id}`;
+    newTeacher.qualification = user.qualification;
+    newTeacher.department = user.department;
+    await this.teacherService.saveTeacher(newTeacher);
+  
+    return this.login(newUser);
+}
+
+async registerParent(user: RegisterParentDto): Promise<AccessToken> {
+  const existingUser = await this.userService.findOneByEmail(user.email);
+  if (existingUser) {
+    throw new BadRequestException('Email already exists');
+  }
+
+  const hashedPassword = await bcrypt.hash(user.password, 10);
+
+  const newUser = await this.userService.createUser({
+    firstname: user.firstname,
+    lastname: user.lastname,
+    email: user.email,
+    password: hashedPassword,
+    username: (user.firstname + user.lastname).toLowerCase(),
+    phoneNumber: user.phoneNumber,
+    avatar: user.avatar,
+    address: user.address,
+    state: user.state,
+    country: user.country,
+  });
+
+  const parentRole: Role = await this.roleService.findByTitle('parent');
+  if (!parentRole) {
+    throw new BadRequestException('Parent role not found');
+  }
+
+  newUser.roles = [parentRole];
+
+  await this.userService.saveUser(newUser);
+
+  const newParent = new Parent();
+  newParent.user = newUser;
+  newParent.parentId = `PAR-${newUser.id}`;
+  await this.parentService.saveParent(newParent);
+
+  return this.login(newUser);
+}
+
+
 }
