@@ -16,6 +16,7 @@ import { EnrollmentModule } from './enrollment/enrollment.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LevelModule } from './level/level.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from './auth/auth.module';
 import typeorm from './config/typeorm';
 
 @Module({
@@ -42,6 +43,7 @@ import typeorm from './config/typeorm';
       envFilePath: process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
     }),
     LevelModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
