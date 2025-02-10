@@ -3,8 +3,6 @@ import { config as dotenvConfig } from 'dotenv';
 import { ConfigService, registerAs } from '@nestjs/config';
 import { Assignment } from "src/assignment/entities/assignment.entity";
 import { Attendance } from "src/attendance/entities/attendance.entity";
-import { Course } from "src/course/entities/course.entity";
-import { Enrollment } from "src/enrollment/entities/enrollment.entity";
 import { Lesson } from "src/lesson/entities/lesson.entity";
 import { Level } from "src/level/entities/level.entity";
 import { Parent } from "src/parent/entities/parent.entity";
@@ -16,6 +14,9 @@ import { Teacher } from "src/teacher/entities/teacher.entity";
 import { User } from "src/user/entities/user.entity";
 
 import { DataSource, DataSourceOptions } from 'typeorm';
+import { Subject } from 'src/subject/entities/subject.entity';
+import { TeacherSubject } from 'src/teacher/entities/teacher-subject.entity';
+import { Section } from 'src/level/entities/section.entity';
 
 dotenvConfig({ path: '.env' });
 
@@ -32,16 +33,17 @@ const config = {
   entities: [
     Assignment,
     Attendance,
-    Course,
-    Enrollment,
+    Subject,
     Lesson,
     Level,
+    Section,
     Parent,
     Result,
     Role,
     Staff,
     Student,
     Teacher,
+    TeacherSubject,
     User,
   ],
   migrations: ["dist/migrations/*{.ts,.js}"],

@@ -45,5 +45,9 @@ export class RegisterStudentDto {
 
     @ApiProperty()
     @IsNumber()
-    levelId: number;
+    classId: number;
+
+    @ApiProperty()
+    @IsString()
+    classSectionId?: number;
 }

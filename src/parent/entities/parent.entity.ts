@@ -16,7 +16,7 @@ export class Parent {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 20, unique: true })
+  @Column({ type: 'varchar', length: 20, unique: true, name: 'parent_id' })
   parentId: string;
 
   @OneToOne(() => User, (user) => user.parent)
@@ -26,9 +26,9 @@ export class Parent {
   @OneToMany(() => Student, (student) => student.parent)
   students: Student[];
 
-  @CreateDateColumn({ type: 'timestamp' })
+  @CreateDateColumn({ type: 'timestamp' , name: 'created_at'})
   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'timestamp' })
+  @UpdateDateColumn({ type: 'timestamp', name: 'updated_at' })
   updatedAt: Date;
 }

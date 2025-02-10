@@ -1,5 +1,5 @@
-import { Course } from 'src/course/entities/course.entity';
 import { Result } from 'src/result/entities/result.entity';
+import { Subject } from 'src/subject/entities/subject.entity';
 import {
   Column,
   CreateDateColumn,
@@ -22,22 +22,22 @@ export class Assignment {
   @Column({ type: 'text' })
   description: string;
 
-  @Column({ type: 'timestamp', nullable: false })
+  @Column({ type: 'timestamp', nullable: false, name: 'due_date' })
   dueDate: Date;
 
-  @ManyToOne(() => Course, (course) => course.assignments, {
+  @ManyToOne(() => Subject, (course) => course.assignments, {
     nullable: false,
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'course_id' })
-  course: Course;
+  course: Subject;
 
   @OneToOne(() => Result, (result) => result.assignment, { nullable: true })
   result: Result;
 
-  @CreateDateColumn({ type: 'timestamp' })
+  @CreateDateColumn({ type: 'timestamp', name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'timestamp' })
+  @UpdateDateColumn({ type: 'timestamp', name: 'updated_at' })
   updatedAt: Date;
 }

@@ -1,6 +1,6 @@
 import { Attendance } from 'src/attendance/entities/attendance.entity';
-import { Enrollment } from 'src/enrollment/entities/enrollment.entity';
 import { Level } from 'src/level/entities/level.entity';
+import { Section } from 'src/level/entities/section.entity';
 import { Parent } from 'src/parent/entities/parent.entity';
 import { Result } from 'src/result/entities/result.entity';
 import { User } from 'src/user/entities/user.entity';
@@ -21,7 +21,7 @@ export class Student {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 20, unique: true })
+  @Column({ type: 'varchar', length: 20, unique: true, name: 'student_id' })
   studentId: string;
 
   @OneToOne(() => User, (user) => user.student)
@@ -31,9 +31,6 @@ export class Student {
   @ManyToOne(() => Parent, (parent) => parent.students)
   @JoinColumn({ name: 'parent_id' })
   parent: Parent;
-
-  @OneToMany(() => Enrollment, (enrollment) => enrollment.student)
-  enrollments: Enrollment[];
 
   @OneToMany(() => Attendance, (attendance) => attendance.student)
   attendances: Attendance[];
@@ -45,9 +42,13 @@ export class Student {
   @JoinColumn({ name: 'class_id' })
   level: Level;
 
-  @CreateDateColumn({ type: 'timestamp' })
+  @ManyToOne(() => Section, (section) => section.students, { nullable: true })
+  @JoinColumn({ name: 'section_id' })
+  section: Section; // Links student to Section (optional)
+
+  @CreateDateColumn({ type: 'timestamp' , name: 'created_at'})
   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'timestamp' })
+  @UpdateDateColumn({ type: 'timestamp', name: 'updated_at' })
   updatedAt: Date;
 }

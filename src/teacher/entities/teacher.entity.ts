@@ -1,4 +1,3 @@
-import { Course } from 'src/course/entities/course.entity';
 import { User } from 'src/user/entities/user.entity';
 import {
   Column,
@@ -10,6 +9,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { TeacherSubject } from './teacher-subject.entity';
 
 @Entity()
 export class Teacher {
@@ -20,7 +20,7 @@ export class Teacher {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column({ type: 'varchar', length: 20, unique: true })
+  @Column({ type: 'varchar', length: 20, unique: true, name: 'teacher_id' })
   teacherId: string;
 
   @Column({ type: 'varchar', length: 100 })
@@ -29,12 +29,13 @@ export class Teacher {
   @Column({ type: 'varchar', length: 50 })
   department: string;
 
-  @OneToMany(() => Course, (course) => course.teacher)
-  courses: Course[];
+  // New relationship to link Teacher to Subjects and Levels
+  @OneToMany(() => TeacherSubject, (teacherSubject) => teacherSubject.teacher)
+  teacherSubjects: TeacherSubject[];
 
-  @CreateDateColumn({ type: 'timestamp' })
+  @CreateDateColumn({ type: 'timestamp', name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'timestamp' })
+  @UpdateDateColumn({ type: 'timestamp', name: 'updated_at' })
   updatedAt: Date;
 }

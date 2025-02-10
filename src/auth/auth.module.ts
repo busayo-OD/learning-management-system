@@ -13,6 +13,7 @@ import { RolesGuard } from './guards/roles.guard';
 import { LevelModule } from 'src/level/level.module';
 import { TeacherModule } from 'src/teacher/teacher.module';
 import { ParentModule } from 'src/parent/parent.module';
+import { StaffModule } from 'src/staff/staff.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ParentModule } from 'src/parent/parent.module';
     LevelModule,
     TeacherModule,
     ParentModule,
+    StaffModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({

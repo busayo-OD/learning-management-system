@@ -1,4 +1,5 @@
 import { Student } from 'src/student/entities/student.entity';
+import { TeacherSubject } from 'src/teacher/entities/teacher-subject.entity';
 import {
   Column,
   CreateDateColumn,
@@ -7,13 +8,14 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Section } from './section.entity';
 
 @Entity('class')
 export class Level {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ unique: true })
   name: string;
 
   @Column({ nullable: true })
@@ -22,9 +24,15 @@ export class Level {
   @OneToMany(() => Student, (student) => student.level)
   students: Student[];
 
-  @CreateDateColumn({ type: 'timestamp' })
-    createdAt: Date;
-  
-  @UpdateDateColumn({ type: 'timestamp' })
+  @OneToMany(() => Section, (section) => section.level)
+  sections: Section[];
+
+  @OneToMany(() => TeacherSubject, (teacherSubject) => teacherSubject.level)
+  teacherSubjects: TeacherSubject[];
+
+  @CreateDateColumn({ type: 'timestamp', name: 'created_at' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ type: 'timestamp', name: 'updated_at' })
   updatedAt: Date;
 }

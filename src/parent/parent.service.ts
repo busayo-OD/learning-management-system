@@ -12,4 +12,11 @@ export class ParentService {
     async saveParent(parent: Parent): Promise<Parent> {
       return this.parentRepository.save(parent);
     }
+
+    async getLastParent(): Promise<Parent | null> {
+            return await this.parentRepository
+              .createQueryBuilder('parent')
+              .orderBy('parent.id', 'DESC')
+              .getOne();
+          }
 }

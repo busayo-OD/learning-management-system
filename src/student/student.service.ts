@@ -13,4 +13,11 @@ export class StudentService {
   async saveStudent(student: Student): Promise<Student> {
     return this.studentRepository.save(student);
   }
+
+  async getLastStudent(): Promise<Student | null> {
+          return await this.studentRepository
+            .createQueryBuilder('student')
+            .orderBy('student.id', 'DESC')
+            .getOne();
+        }
 }

@@ -18,6 +18,9 @@ import { Teacher } from 'src/teacher/entities/teacher.entity';
 import { RegisterParentDto } from './dto/register-parent.dto';
 import { Parent } from 'src/parent/entities/parent.entity';
 import { ParentService } from 'src/parent/parent.service';
+import { StaffService } from 'src/staff/staff.service';
+import { RegisterStaffDto } from './dto/register-staff.dto';
+import { Staff } from 'src/staff/entities/staff.entity';
 
 @Injectable()
 export class AuthService {
@@ -29,6 +32,7 @@ export class AuthService {
     private readonly levelService: LevelService,
     private readonly teacherService: TeacherService,
     private readonly parentService: ParentService,
+    private readonly staffService: StaffService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<User | null> {
@@ -68,26 +72,36 @@ export class AuthService {
   
     // Assign the "student" role to the user
     newUser.roles = [studentRole];
-  
     await this.userService.saveUser(newUser);
   
     // Fetch the level from the database
-    const level = await this.levelService.findById(user.levelId);
+    const level = await this.levelService.findById(user.classId);
     if (!level) {
       throw new BadRequestException('Level not found');
     }
   
+    // Fetch the section from the database (only if provided)
+    let section = null;
+    if (user.classSectionId) {
+      section = await this.levelService.findSectionById(user.classSectionId, user.classId);
+    }
+  
+    // Generate student ID
+    const studentId = await this.generateStudentId();
+  
     // Create a new student record
     const newStudent = new Student();
     newStudent.user = newUser;
-    newStudent.studentId = `STU-${newUser.id}`;
+    newStudent.studentId = studentId;
     newStudent.level = level;
+    newStudent.section = section; // Section can be null if not assigned
     await this.studentService.saveStudent(newStudent);
   
     // Return the login token
     return this.login(newUser);
   }
-  
+
+
   async registerAdmin(user: RegisterAdminDto): Promise<AccessToken> {
     const existingUser = await this.userService.findOneByEmail(user.email);
     if (existingUser) {
@@ -159,10 +173,12 @@ export class AuthService {
     }
     newUser.roles = [teacherRole];
     await this.userService.saveUser(newUser);
+
+    const teacherId = await this.generateTeacherId();
   
     const newTeacher = new Teacher();
     newTeacher.user = newUser;
-    newTeacher.teacherId = `TEA-${newUser.id}`;
+    newTeacher.teacherId = teacherId;
     newTeacher.qualification = user.qualification;
     newTeacher.department = user.department;
     await this.teacherService.saveTeacher(newTeacher);
@@ -200,13 +216,111 @@ async registerParent(user: RegisterParentDto): Promise<AccessToken> {
 
   await this.userService.saveUser(newUser);
 
+  const parentId = await this.generateParentId();
+
   const newParent = new Parent();
   newParent.user = newUser;
-  newParent.parentId = `PAR-${newUser.id}`;
+  newParent.parentId = parentId;
   await this.parentService.saveParent(newParent);
 
   return this.login(newUser);
 }
 
+async registerStaff(user: RegisterStaffDto): Promise<AccessToken> {
+  const existingUser = await this.userService.findOneByEmail(user.email);
+  if (existingUser) {
+    throw new BadRequestException('Email already exists');
+  }
+
+  const hashedPassword = await bcrypt.hash(user.password, 10);
+
+  const newUser = await this.userService.createUser({
+    firstname: user.firstname,
+    lastname: user.lastname,
+    email: user.email,
+    password: hashedPassword,
+    username: (user.firstname + user.lastname).toLowerCase(),
+    phoneNumber: user.phoneNumber,
+    avatar: user.avatar,
+    address: user.address,
+    state: user.state,
+    country: user.country,
+  });
+
+  const staffRole: Role = await this.roleService.findByTitle('staff');
+  if (!staffRole) {
+    throw new BadRequestException('Staff role not found');
+  }
+  newUser.roles = [staffRole];
+  await this.userService.saveUser(newUser);
+
+  const staffId = await this.generateStaffId();
+
+  const newStaff = new Staff();
+  newStaff.user = newUser;
+  newStaff.staffId = staffId;
+  newStaff.jobTitle = user.jobTitle;
+  newStaff.department = user.department;
+  await this.staffService.saveStaff(newStaff);
+
+  return this.login(newUser);
+}
+
+async generateStudentId(): Promise<string> {
+  const lastStudent = await this.studentService.getLastStudent();
+
+  let increment = 1;
+  if (lastStudent) {
+    const lastId = lastStudent.studentId;
+    const numericPart = lastId.split('-')[2];
+    increment = parseInt(numericPart, 10) + 1;
+  }
+
+  const formattedNumber = increment.toString().padStart(5, '0');
+  return `NXL-STD-${formattedNumber}`;
+}
+
+
+  async generateTeacherId(): Promise<string> {
+    const lastTeacher = await this.teacherService.getLastTeacher();
+  
+    let increment = 1;
+    if (lastTeacher) {
+      const lastId = lastTeacher.teacherId;
+      const numericPart = lastId.split('-')[2];
+      increment = parseInt(numericPart, 10) + 1;
+    }
+  
+    const formattedNumber = increment.toString().padStart(5, '0');
+    return `NXL-TEA-${formattedNumber}`;
+  }
+  
+async generateParentId(): Promise<string> {
+  const lastParent = await this.parentService.getLastParent();
+
+  let increment = 1;
+  if (lastParent) {
+    const lastId = lastParent.parentId;
+    const numericPart = lastId.split('-')[2];
+    increment = parseInt(numericPart, 10) + 1;
+  }
+
+  const formattedNumber = increment.toString().padStart(5, '0');
+  return `NXL-PAR-${formattedNumber}`;
+}
+
+async generateStaffId(): Promise<string> {
+  const lastStaff = await this.staffService.getLastStaff();
+
+  let increment = 1;
+  if (lastStaff) {
+    const lastId = lastStaff.staffId;
+    const numericPart = lastId.split('-')[1];
+    increment = parseInt(numericPart, 10) + 1;
+  }
+
+  const formattedNumber = increment.toString().padStart(5, '0');
+  return `NXL-${formattedNumber}`;
+}
 
 }
