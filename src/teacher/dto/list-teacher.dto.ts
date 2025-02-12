@@ -22,6 +22,9 @@ export class TeacherDto {
   subjects: SubjectDetailDto[];
 
   @ApiProperty()
+  classes: string[];
+
+  @ApiProperty()
   phoneNumber: string;
 
   @ApiProperty()

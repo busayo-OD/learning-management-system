@@ -9,6 +9,7 @@ import { TeacherSubject } from 'src/teacher/entities/teacher-subject.entity';
 import { Level } from 'src/level/entities/level.entity';
 import { SubjectDto } from './dto/list-subject.dto';
 import { Section } from 'src/level/entities/section.entity';
+import { UpdateSubjectDto } from './dto/update-subject.dto';
 
 @Injectable()
 export class SubjectService {
@@ -85,6 +86,33 @@ export class SubjectService {
       subjectName: subject.subjectName,
       description: subject.description || 'No description available',
     }));
+  }
+
+  async getSubjectById(id: number): Promise<SubjectDto> {
+    const subject = await this.subjectRepository.findOne({ where: { id } });
+    if (!subject) throw new NotFoundException('Subject not found');
+    return {
+      id: subject.id,
+      subjectCode: subject.subjectCode,
+      subjectName: subject.subjectName,
+      description: subject.description || 'No description available',
+    };
+  }
+
+  async updateSubject(id: number, updateSubjectDto: UpdateSubjectDto): Promise<boolean> {
+    const subject = await this.subjectRepository.findOne({ where: { id } });
+    if (!subject) throw new NotFoundException('Subject not found');
+    
+    await this.subjectRepository.update(id, updateSubjectDto);
+    return true;
+  }
+
+  async deleteSubject(id: number): Promise<boolean> {
+    const subject = await this.subjectRepository.findOne({ where: { id } });
+    if (!subject) throw new NotFoundException('Subject not found');
+    
+    await this.subjectRepository.remove(subject);
+    return true;
   }
   
 }
