@@ -14,6 +14,7 @@ import {
   OneToOne,
 } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
+import { Gender } from '../enums/gender.enum';
 
 @Entity()
 export class User {
@@ -30,9 +31,6 @@ export class User {
   @Column({ type: 'varchar', unique: true, length: 100 })
   email: string;
 
-  @Column({ type: 'varchar', unique: true, length: 30 })
-  username: string;
-
   @Column({ type: 'varchar', length: 255 })
   password: string;
 
@@ -41,6 +39,12 @@ export class User {
 
   @Column({ type: 'text', nullable: true })
   avatar: string;
+
+  @Column({ type: 'enum', enum: Gender })
+  gender: Gender;
+
+  @Column({ type: 'varchar', nullable: true })
+  dob: string;
 
   @Column({ type: 'text' })
   address: string;

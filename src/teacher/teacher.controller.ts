@@ -11,6 +11,12 @@ import { JwtGuard } from 'src/auth/guards/jwt.guard';
 export class TeacherController {
   constructor(private readonly teacherService: TeacherService) {}
 
+  @ApiOkResponse({ type: Object })
+  @Get('/count')
+  async getTotalTeachers(): Promise<{ total: number }> {
+    return this.teacherService.getTotalTeachers();
+  }
+
   @ApiOkResponse({
     type: TeacherDto,
     isArray: true,
@@ -36,4 +42,6 @@ export class TeacherController {
   async deleteTeacher(@Param('teacherId') teacherId: string): Promise<void> {
     return this.teacherService.deleteTeacher(teacherId);
   }
+
+  
 }

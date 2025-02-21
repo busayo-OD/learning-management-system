@@ -1,20 +1,9 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { SubjectDetailDto } from "src/subject/dto/subject-details.dto";
+import { UserDto } from "src/user/dto/user.dto";
 
-class SubjectDetailDto {
-  @ApiProperty()
-  subject: string;
 
-  @ApiProperty()
-  class: string;
-
-  @ApiProperty()
-  section: string;
-}
-
-export class TeacherDto {
-  @ApiProperty()
-  fullName: string;
-
+export class TeacherDto extends UserDto{
   @ApiProperty()
   teacherId: string;
 
@@ -23,12 +12,6 @@ export class TeacherDto {
 
   @ApiProperty()
   classes: string[];
-
-  @ApiProperty()
-  phoneNumber: string;
-
-  @ApiProperty()
-  address: string;
 }
 
   

@@ -19,4 +19,9 @@ export class ParentService {
               .orderBy('parent.id', 'DESC')
               .getOne();
           }
+    
+    async getTotalParents(): Promise<{ total: number }> {
+      const count = await this.parentRepository.count();
+      return { total: count };
+    }
 }

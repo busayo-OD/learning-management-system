@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { BadRequestException } from '@nestjs/common';
 import { Student } from 'src/student/entities/student.entity';
 import { User } from 'src/user/entities/user.entity';
-import { Role } from 'src/role/entities/role.entity';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
@@ -43,97 +42,134 @@ export class AuthService {
     return isMatch ? user : null;
   }
 
-  async registerStudent(user: RegisterStudentDto): Promise<AccessToken> {
-    const existingUser = await this.userService.findOneByEmail(user.email);
+  private async createUser(userDto: any): Promise<User> {
+    const existingUser = await this.userService.findOneByEmail(userDto.email);
     if (existingUser) {
       throw new BadRequestException('Email already exists');
     }
-  
-    const hashedPassword = await bcrypt.hash(user.password, 10);
-  
-    const newUser = await this.userService.createUser({
-      firstname: user.firstname,
-      lastname: user.lastname,
-      email: user.email,
+
+    const hashedPassword = await bcrypt.hash(userDto.password, 10);
+
+    return this.userService.createUser({
+      firstname: userDto.firstname,
+      lastname: userDto.lastname,
+      email: userDto.email,
       password: hashedPassword,
-      username: (user.firstname + user.lastname).toLowerCase(),
-      phoneNumber: user.phoneNumber,
-      avatar: user.avatar,
-      address: user.address,
-      state: user.state,
-      country: user.country,
+      phoneNumber: userDto.phoneNumber,
+      avatar: userDto.avatar,
+      dob: userDto.dob,
+      gender: userDto.gender,
+      address: userDto.address,
+      state: userDto.state,
+      country: userDto.country,
     });
-  
-    // Fetch the "student" role from the database
-    const studentRole: Role = await this.roleService.findByTitle('student');
+  }
+
+  async registerStudent(user: RegisterStudentDto): Promise<AccessToken> {
+    const newUser = await this.createUser(user);
+    const studentRole = await this.roleService.findByTitle('student');
     if (!studentRole) {
       throw new BadRequestException('Student role not found');
     }
-  
-    // Assign the "student" role to the user
     newUser.roles = [studentRole];
     await this.userService.saveUser(newUser);
-  
-    // Fetch the level from the database
+
     const level = await this.levelService.findById(user.classId);
     if (!level) {
       throw new BadRequestException('Level not found');
     }
-  
-    // Fetch the section from the database (only if provided)
-    let section = null;
-    if (user.classSectionId) {
-      section = await this.levelService.findSectionById(user.classSectionId, user.classId);
-    }
-  
-    // Generate student ID
+
+    const section = user.classSectionId
+      ? await this.levelService.findSectionById(
+          user.classSectionId,
+          user.classId,
+        )
+      : null;
     const studentId = await this.generateStudentId();
-  
-    // Create a new student record
+
     const newStudent = new Student();
     newStudent.user = newUser;
     newStudent.studentId = studentId;
     newStudent.level = level;
-    newStudent.section = section; // Section can be null if not assigned
+    newStudent.section = section;
     await this.studentService.saveStudent(newStudent);
-  
-    // Return the login token
+
     return this.login(newUser);
   }
 
-
   async registerAdmin(user: RegisterAdminDto): Promise<AccessToken> {
-    const existingUser = await this.userService.findOneByEmail(user.email);
-    if (existingUser) {
-      throw new BadRequestException('Email already exists');
-    }
-  
-    const hashedPassword = await bcrypt.hash(user.password, 10);
-  
-    const newUser = await this.userService.createUser({
-      firstname: user.firstname,
-      lastname: user.lastname,
-      email: user.email,
-      password: hashedPassword,
-      username: (user.firstname + user.lastname).toLowerCase(),
-      phoneNumber: user.phoneNumber,
-      avatar: user.avatar,
-      address: user.address,
-      state: user.state,
-      country: user.country,
-    });
-  
-    const adminRole: Role = await this.roleService.findByTitle('admin');
+    const newUser = await this.createUser(user);
+    const adminRole = await this.roleService.findByTitle('admin');
     if (!adminRole) {
       throw new BadRequestException('Admin role not found');
     }
-  
     newUser.roles = [adminRole];
-  
     await this.userService.saveUser(newUser);
     return this.login(newUser);
   }
-  
+
+  async registerTeacher(user: RegisterTeacherDto): Promise<AccessToken> {
+    const newUser = await this.createUser(user);
+    const teacherRole = await this.roleService.findByTitle('teacher');
+    if (!teacherRole) {
+      throw new BadRequestException('Teacher role not found');
+    }
+    newUser.roles = [teacherRole];
+    await this.userService.saveUser(newUser);
+
+    const teacherId = await this.generateTeacherId();
+    const newTeacher = new Teacher();
+    newTeacher.user = newUser;
+    newTeacher.teacherId = teacherId;
+    newTeacher.qualification = user.qualification;
+    newTeacher.department = user.department;
+    await this.teacherService.saveTeacher(newTeacher);
+
+    return this.login(newUser);
+  }
+
+  async registerParent(user: RegisterParentDto): Promise<AccessToken> {
+    const newUser = await this.createUser(user);
+    const parentRole = await this.roleService.findByTitle('parent');
+    if (!parentRole) {
+      throw new BadRequestException('Parent role not found');
+    }
+    newUser.roles = [parentRole];
+    await this.userService.saveUser(newUser);
+
+    const parentId = await this.generateParentId();
+    const students = user.studentIds?.length
+      ? await this.studentService.findStudentsByIds(user.studentIds)
+      : [];
+
+    const newParent = new Parent();
+    newParent.user = newUser;
+    newParent.parentId = parentId;
+    newParent.students = students;
+    await this.parentService.saveParent(newParent);
+
+    return this.login(newUser);
+  }
+
+  async registerStaff(user: RegisterStaffDto): Promise<AccessToken> {
+    const newUser = await this.createUser(user);
+    const staffRole = await this.roleService.findByTitle('staff');
+    if (!staffRole) {
+      throw new BadRequestException('Staff role not found');
+    }
+    newUser.roles = [staffRole];
+    await this.userService.saveUser(newUser);
+
+    const staffId = await this.generateStaffId();
+    const newStaff = new Staff();
+    newStaff.user = newUser;
+    newStaff.staffId = staffId;
+    newStaff.jobTitle = user.jobTitle;
+    newStaff.department = user.department;
+    await this.staffService.saveStaff(newStaff);
+
+    return this.login(newUser);
+  }
 
   async login(user: User): Promise<AccessToken> {
     const payload = {
@@ -146,181 +182,59 @@ export class AuthService {
     return { access_token: token };
   }
 
-  async registerTeacher(user: RegisterTeacherDto): Promise<AccessToken> {
-    const existingUser = await this.userService.findOneByEmail(user.email);
-    if (existingUser) {
-      throw new BadRequestException('Email already exists');
+  async generateStudentId(): Promise<string> {
+    const lastStudent = await this.studentService.getLastStudent();
+
+    let increment = 1;
+    if (lastStudent) {
+      const lastId = lastStudent.studentId;
+      const numericPart = lastId.split('-')[2];
+      increment = parseInt(numericPart, 10) + 1;
     }
-  
-    const hashedPassword = await bcrypt.hash(user.password, 10);
-  
-    const newUser = await this.userService.createUser({
-      firstname: user.firstname,
-      lastname: user.lastname,
-      email: user.email,
-      password: hashedPassword,
-      username: (user.firstname + user.lastname).toLowerCase(),
-      phoneNumber: user.phoneNumber,
-      avatar: user.avatar,
-      address: user.address,
-      state: user.state,
-      country: user.country,
-    });
-  
-    const teacherRole: Role = await this.roleService.findByTitle('teacher');
-    if (!teacherRole) {
-      throw new BadRequestException('Teacher role not found');
-    }
-    newUser.roles = [teacherRole];
-    await this.userService.saveUser(newUser);
 
-    const teacherId = await this.generateTeacherId();
-  
-    const newTeacher = new Teacher();
-    newTeacher.user = newUser;
-    newTeacher.teacherId = teacherId;
-    newTeacher.qualification = user.qualification;
-    newTeacher.department = user.department;
-    await this.teacherService.saveTeacher(newTeacher);
-  
-    return this.login(newUser);
-}
-
-async registerParent(user: RegisterParentDto): Promise<AccessToken> {
-  const existingUser = await this.userService.findOneByEmail(user.email);
-  if (existingUser) {
-    throw new BadRequestException('Email already exists');
+    const formattedNumber = increment.toString().padStart(5, '0');
+    return `NXL-STD-${formattedNumber}`;
   }
-
-  const hashedPassword = await bcrypt.hash(user.password, 10);
-
-  const newUser = await this.userService.createUser({
-    firstname: user.firstname,
-    lastname: user.lastname,
-    email: user.email,
-    password: hashedPassword,
-    username: (user.firstname + user.lastname).toLowerCase(),
-    phoneNumber: user.phoneNumber,
-    avatar: user.avatar,
-    address: user.address,
-    state: user.state,
-    country: user.country,
-  });
-
-  const parentRole: Role = await this.roleService.findByTitle('parent');
-  if (!parentRole) {
-    throw new BadRequestException('Parent role not found');
-  }
-
-  newUser.roles = [parentRole];
-
-  await this.userService.saveUser(newUser);
-
-  const parentId = await this.generateParentId();
-
-  const newParent = new Parent();
-  newParent.user = newUser;
-  newParent.parentId = parentId;
-  await this.parentService.saveParent(newParent);
-
-  return this.login(newUser);
-}
-
-async registerStaff(user: RegisterStaffDto): Promise<AccessToken> {
-  const existingUser = await this.userService.findOneByEmail(user.email);
-  if (existingUser) {
-    throw new BadRequestException('Email already exists');
-  }
-
-  const hashedPassword = await bcrypt.hash(user.password, 10);
-
-  const newUser = await this.userService.createUser({
-    firstname: user.firstname,
-    lastname: user.lastname,
-    email: user.email,
-    password: hashedPassword,
-    username: (user.firstname + user.lastname).toLowerCase(),
-    phoneNumber: user.phoneNumber,
-    avatar: user.avatar,
-    address: user.address,
-    state: user.state,
-    country: user.country,
-  });
-
-  const staffRole: Role = await this.roleService.findByTitle('staff');
-  if (!staffRole) {
-    throw new BadRequestException('Staff role not found');
-  }
-  newUser.roles = [staffRole];
-  await this.userService.saveUser(newUser);
-
-  const staffId = await this.generateStaffId();
-
-  const newStaff = new Staff();
-  newStaff.user = newUser;
-  newStaff.staffId = staffId;
-  newStaff.jobTitle = user.jobTitle;
-  newStaff.department = user.department;
-  await this.staffService.saveStaff(newStaff);
-
-  return this.login(newUser);
-}
-
-async generateStudentId(): Promise<string> {
-  const lastStudent = await this.studentService.getLastStudent();
-
-  let increment = 1;
-  if (lastStudent) {
-    const lastId = lastStudent.studentId;
-    const numericPart = lastId.split('-')[2];
-    increment = parseInt(numericPart, 10) + 1;
-  }
-
-  const formattedNumber = increment.toString().padStart(5, '0');
-  return `NXL-STD-${formattedNumber}`;
-}
-
 
   async generateTeacherId(): Promise<string> {
     const lastTeacher = await this.teacherService.getLastTeacher();
-  
+
     let increment = 1;
     if (lastTeacher) {
       const lastId = lastTeacher.teacherId;
       const numericPart = lastId.split('-')[2];
       increment = parseInt(numericPart, 10) + 1;
     }
-  
+
     const formattedNumber = increment.toString().padStart(5, '0');
     return `NXL-TEA-${formattedNumber}`;
   }
-  
-async generateParentId(): Promise<string> {
-  const lastParent = await this.parentService.getLastParent();
 
-  let increment = 1;
-  if (lastParent) {
-    const lastId = lastParent.parentId;
-    const numericPart = lastId.split('-')[2];
-    increment = parseInt(numericPart, 10) + 1;
+  async generateParentId(): Promise<string> {
+    const lastParent = await this.parentService.getLastParent();
+
+    let increment = 1;
+    if (lastParent) {
+      const lastId = lastParent.parentId;
+      const numericPart = lastId.split('-')[2];
+      increment = parseInt(numericPart, 10) + 1;
+    }
+
+    const formattedNumber = increment.toString().padStart(5, '0');
+    return `NXL-PAR-${formattedNumber}`;
   }
 
-  const formattedNumber = increment.toString().padStart(5, '0');
-  return `NXL-PAR-${formattedNumber}`;
-}
+  async generateStaffId(): Promise<string> {
+    const lastStaff = await this.staffService.getLastStaff();
 
-async generateStaffId(): Promise<string> {
-  const lastStaff = await this.staffService.getLastStaff();
+    let increment = 1;
+    if (lastStaff) {
+      const lastId = lastStaff.staffId;
+      const numericPart = lastId.split('-')[1];
+      increment = parseInt(numericPart, 10) + 1;
+    }
 
-  let increment = 1;
-  if (lastStaff) {
-    const lastId = lastStaff.staffId;
-    const numericPart = lastId.split('-')[1];
-    increment = parseInt(numericPart, 10) + 1;
+    const formattedNumber = increment.toString().padStart(5, '0');
+    return `NXL-${formattedNumber}`;
   }
-
-  const formattedNumber = increment.toString().padStart(5, '0');
-  return `NXL-${formattedNumber}`;
-}
-
 }

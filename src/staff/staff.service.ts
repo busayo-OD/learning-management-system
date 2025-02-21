@@ -19,4 +19,9 @@ export class StaffService {
           .orderBy('staff.id', 'DESC')
           .getOne();
       }
+
+      async getTotalStaff(): Promise<{ total: number }> {
+        const count = await this.staffRepository.count();
+        return { total: count };
+      }
 }

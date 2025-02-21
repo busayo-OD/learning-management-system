@@ -32,20 +32,28 @@ export class TeacherService {
         'teacherSubjects.section',
       ],
     });
-
-    return teachers.map((teacher) => ({
-      fullName: `${teacher.user.firstname} ${teacher.user.lastname}`,
+  
+    return teachers.map(teacher => ({
+      firstname: teacher.user.firstname,
+      lastname: teacher.user.lastname,
+      email: teacher.user.email,
+      avatar: teacher.user.avatar,
+      gender: teacher.user.gender,
+      dob: teacher.user.dob,
+      address: teacher.user.address,
+      state: teacher.user.state,
+      country: teacher.user.country,
+      phoneNumber: teacher.user.phoneNumber,
       teacherId: teacher.teacherId,
-      subjects: teacher.teacherSubjects.map((ts) => ({
+      subjects: teacher.teacherSubjects.map(ts => ({
         subject: ts.subject.subjectName,
         class: ts.level.name,
-        section: ts.section ? ts.section.name : null,
+        section: ts.section?.name || 'N/A',
       })),
-      classes: [...new Set(teacher.teacherSubjects.map((ts) => ts.level.name))],
-      phoneNumber: teacher.user.phoneNumber,
-      address: `${teacher.user.address}, ${teacher.user.state}, ${teacher.user.country}`,
+      classes: [...new Set(teacher.teacherSubjects.map(ts => ts.level.name))],
     }));
   }
+  
 
   async getTeacherByTeacherId(teacherId: string): Promise<TeacherDto> {
     const teacher = await this.teacherRepository.findOne({
@@ -58,30 +66,43 @@ export class TeacherService {
         'teacherSubjects.section',
       ],
     });
-
+  
     if (!teacher) {
       throw new NotFoundException(`Teacher with ID ${teacherId} not found`);
     }
-
+  
     return {
-      fullName: `${teacher.user.firstname} ${teacher.user.lastname}`,
+      firstname: teacher.user.firstname,
+      lastname: teacher.user.lastname,
+      email: teacher.user.email,
+      avatar: teacher.user.avatar,
+      gender: teacher.user.gender,
+      dob: teacher.user.dob,
+      address: teacher.user.address,
+      state: teacher.user.state,
+      country: teacher.user.country,
+      phoneNumber: teacher.user.phoneNumber,
       teacherId: teacher.teacherId,
-      subjects: teacher.teacherSubjects.map((ts) => ({
+      subjects: teacher.teacherSubjects.map(ts => ({
         subject: ts.subject.subjectName,
         class: ts.level.name,
-        section: ts.section ? ts.section.name : null,
+        section: ts.section?.name || 'N/A',
       })),
-      classes: [...new Set(teacher.teacherSubjects.map((ts) => ts.level.name))],
-      phoneNumber: teacher.user.phoneNumber,
-      address: `${teacher.user.address}, ${teacher.user.state}, ${teacher.user.country}`,
+      classes: [...new Set(teacher.teacherSubjects.map(ts => ts.level.name))],
     };
   }
+  
 
   async deleteTeacher(teacherId: string): Promise<void> {
     const result = await this.teacherRepository.delete({ teacherId });
     if (result.affected === 0) {
       throw new NotFoundException(`Teacher with ID ${teacherId} not found`);
     }
+  }
+
+  async getTotalTeachers(): Promise<{ total: number }> {
+    const count = await this.teacherRepository.count();
+    return { total: count };
   }
 
 }
