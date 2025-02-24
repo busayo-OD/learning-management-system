@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Post, Request } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Post, } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthResponseDTO } from './dto/auth-response.dto';
 import { AccessToken } from './types/access-token';
@@ -28,12 +28,14 @@ export class AuthController {
   })
   @Post('login')
   async login(
-    @Request() req,
+  @Body() loginBody: { email: string; password: string },
   ): Promise<AuthResponseDTO | BadRequestException> {
-    const user = req.user;
-    if (!user) {
-      throw new BadRequestException('Invalid credentials');
+    const { email, password } = loginBody;
+    if (!email || !password) {
+      throw new BadRequestException('Email and password are required');
     }
+
+    const user = await this.authService.validateUser(email, password);
 
     const accessToken: AccessToken = await this.authService.login(user);
     return new AuthResponseDTO(accessToken);

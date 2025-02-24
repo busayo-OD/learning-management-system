@@ -1,14 +1,19 @@
 import { Controller, Get, } from '@nestjs/common';
 import { ParentService } from './parent.service';
 import { ApiOkResponse } from '@nestjs/swagger';
+import { CountService } from 'src/user/user.count.service';
+import { CountDto } from 'src/user/dto/count.dto';
 
 @Controller('parents')
 export class ParentController {
-  constructor(private readonly parentService: ParentService) {}
+  constructor(
+    private readonly parentService: ParentService,
+    private readonly countService: CountService
+  ) {}
 
-  @ApiOkResponse({ type: Object })
+  @ApiOkResponse({ type: CountDto })
   @Get('/count')
-  async getTotalStudents(): Promise<{ total: number }> {
-    return this.parentService.getTotalParents();
+  async getTotalParents(): Promise<CountDto> {
+    return this.countService.getTotalByRole('parent');
   }
 }
