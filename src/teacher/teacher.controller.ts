@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Param, UseGuards, } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards, } from '@nestjs/common';
 import { TeacherService } from './teacher.service';
 import { TeacherDto } from './dto/list-teacher.dto';
 import { ApiOkResponse } from '@nestjs/swagger';
@@ -36,16 +36,8 @@ export class TeacherController {
   @Roles("admin")
   @UseGuards(JwtGuard, RolesGuard)
   @Get(':teacherId')
-  async getTeacherByTeacherId(@Param('teacherId') teacherId: string): Promise<TeacherDto> {
+  async getTeacherById(@Param('teacherId') teacherId: string): Promise<TeacherDto> {
     return this.teacherService.getTeacherByTeacherId(teacherId);
   }
 
-  @Roles("admin")
-  @UseGuards(JwtGuard, RolesGuard)
-  @Delete(':teacherId')
-  async deleteTeacher(@Param('teacherId') teacherId: string): Promise<void> {
-    return this.teacherService.deleteTeacher(teacherId);
-  }
-
-  
 }

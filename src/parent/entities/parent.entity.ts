@@ -9,6 +9,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   Entity,
+  DeleteDateColumn,
 } from 'typeorm';
 
 @Entity()
@@ -31,4 +32,7 @@ export class Parent {
 
   @UpdateDateColumn({ type: 'timestamp', name: 'updated_at' })
   updatedAt: Date;
+
+  @DeleteDateColumn({ type: 'timestamp', name: 'deleted_at', nullable: true })
+  deletedAt: Date | null; // Nullable to allow soft deletes
 }

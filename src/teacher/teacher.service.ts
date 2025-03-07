@@ -3,6 +3,7 @@ import { Teacher } from './entities/teacher.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TeacherDto } from './dto/list-teacher.dto';
+import { User } from 'src/user/entities/user.entity';
 
 @Injectable()
 export class TeacherService {
@@ -10,7 +11,7 @@ export class TeacherService {
     @InjectRepository(Teacher)
     private teacherRepository: Repository<Teacher>,
   ) {}
-  
+
   async saveTeacher(teacher: Teacher): Promise<Teacher> {
     return this.teacherRepository.save(teacher);
   }
@@ -31,6 +32,7 @@ export class TeacherService {
         'teacherSubjects.level',
         'teacherSubjects.section',
       ],
+      where: { deletedAt: null }
     });
   
     return teachers.map(teacher => ({
@@ -57,7 +59,7 @@ export class TeacherService {
 
   async getTeacherByTeacherId(teacherId: string): Promise<TeacherDto> {
     const teacher = await this.teacherRepository.findOne({
-      where: { teacherId },
+      where: { teacherId, deletedAt: null },
       relations: [
         'user',
         'teacherSubjects',
@@ -93,12 +95,52 @@ export class TeacherService {
   }
   
 
-  async deleteTeacher(teacherId: string): Promise<void> {
-    const result = await this.teacherRepository.delete({ teacherId });
-    if (result.affected === 0) {
-      throw new NotFoundException(`Teacher with ID ${teacherId} not found`);
-    }
-  }
+ async softDeleteTeacher(teacherId: string): Promise<boolean> {
+       const teacher = await this.teacherRepository.findOne({
+         where: { teacherId },
+         relations: ['user'],
+       });
+     
+       if (!teacher) {
+         throw new Error('Teacher not found');
+       }
+     
+       // Soft delete the teacher record
+       await this.teacherRepository.softRemove(teacher);
+     
+       // Soft delete the user record if they only have the 'teacher' role
+       if (teacher.user.roles.length === 1 && teacher.user.roles[0].title === 'teacher') {
+         await this.teacherRepository.manager
+           .getRepository(User)
+           .softRemove(teacher.user);
+       }
+     
+       return true;
+     }
+     
+     async restoreTeacher(teacherId: string): Promise<boolean> {
+       const teacher = await this.teacherRepository.findOne({
+         where: { teacherId },
+         relations: ['user'],
+         withDeleted: true, // Include soft-deleted records
+       });
+     
+       if (!teacher) {
+         throw new Error('Teacher not found');
+       }
+     
+       // Restore the teacher record
+       await this.teacherRepository.recover(teacher);
+     
+       // Restore the user record if they were soft deleted
+       if (teacher.user) {
+         await this.teacherRepository.manager
+           .getRepository(User)
+           .recover(teacher.user);
+       }
+     
+       return true;
+     }
 
   async getTotalTeachers(): Promise<{ total: number }> {
     const count = await this.teacherRepository.count();
